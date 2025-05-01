@@ -1,13 +1,43 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { auth } from '../../firebase';
+import { signOut, onAuthStateChanged } from 'firebase/auth';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [user, setUser] = useState(null);
+  const menuRef = useRef(null); // Ref for the menu
 
-  const handleSignUpClick = () => {
-    const registrationSection = document.getElementById('registration');
-    if (registrationSection) {
-      registrationSection.scrollIntoView({ behavior: 'smooth' });
+  useEffect(() => {
+    // Listen for authentication state changes
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
+
+    return () => unsubscribe(); // Cleanup the listener on unmount
+  }, []);
+
+  useEffect(() => {
+    // Close menu when clicking outside
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const handleSignOut = async () => {
+    try {
+      await signOut(auth);
+      alert('You have been signed out.');
+    } catch (error) {
+      console.error('Error signing out:', error);
+      alert(error.message);
     }
   };
 
@@ -42,9 +72,9 @@ const Navbar = () => {
 
         {/* Navigation Links */}
         <ul
-          className={`${
-            isMenuOpen ? 'block' : 'hidden'
-          } md:flex space-y-2 md:space-y-0 md:space-x-6 absolute md:static top-16 left-0 w-full md:w-auto bg-white md:bg-transparent shadow-md md:shadow-none`}
+          ref={menuRef}
+          className={`${isMenuOpen ? 'block' : 'hidden'
+            } md:flex space-y-2 md:space-y-0 md:space-x-6 absolute md:static top-16 left-0 w-full md:w-auto bg-white md:bg-transparent shadow-md md:shadow-none`}
         >
           <li>
             <a href="#home" className="block text-gray-600 hover:text-gray-800 px-4 py-2">
@@ -62,19 +92,33 @@ const Navbar = () => {
             </a>
           </li>
           <li>
-            <a href="#cart" className="block text-gray-600 hover:text-gray-800 px-4 py-2">
+            <a href="/cart" className="block text-gray-600 hover:text-gray-800 px-4 py-2">
               Cart
             </a>
           </li>
         </ul>
 
-        {/* Sign up Button */}
-        <button
-          className="hidden md:block px-4 py-2 bg-red-500 text-white font-semibold rounded-lg shadow-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-opacity-75"
-          onClick={handleSignUpClick}
-        >
-          Sign up
-        </button>
+        {/* Sign up / Sign out Button */}
+        {user ? (
+          <button
+            className="hidden md:block px-4 py-2 bg-red-500 text-white font-semibold rounded-lg shadow-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-opacity-75"
+            onClick={handleSignOut}
+          >
+            Sign Out
+          </button>
+        ) : (
+          <button
+            className="hidden md:block px-4 py-2 bg-red-500 text-white font-semibold rounded-lg shadow-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-opacity-75"
+            onClick={() => {
+              const registrationSection = document.getElementById('registration');
+              if (registrationSection) {
+                registrationSection.scrollIntoView({ behavior: 'smooth' });
+              }
+            }}
+          >
+            Sign up
+          </button>
+        )}
       </div>
     </nav>
   );

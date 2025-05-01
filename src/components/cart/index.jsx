@@ -1,90 +1,198 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { collection, getDocs } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import db from '@/firebase';
-import { collection, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { loadStripe } from '@stripe/stripe-js';
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
 const Cart = () => {
   const [cartItems, setCartItems] = useState([]);
-
-  // Fetch cart items from Firestore
-  const fetchCartItems = async () => {
-    try {
-      const querySnapshot = await getDocs(collection(db, 'cart'));
-      const items = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setCartItems(items);
-    } catch (error) {
-      console.error('Error fetching cart items:', error);
-    }
-  };
-
-  // Remove an item from the cart
-  const handleRemoveItem = async (id) => {
-    try {
-      await deleteDoc(doc(db, 'cart', id));
-      setCartItems((prevItems) => prevItems.filter((item) => item.id !== id));
-      console.log(`Item with id ${id} removed from the cart`);
-    } catch (error) {
-      console.error('Error removing item from cart:', error);
-    }
-  };
+  const [userId, setUserId] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchCartItems();
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUserId(user.uid);
+      } else {
+        setUserId(null);
+        setCartItems([]);
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    const fetchCartData = async () => {
+      if (!userId) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const cartCollection = collection(db, 'users', userId, 'cart');
+        const cartSnapshot = await getDocs(cartCollection);
+        const cartData = cartSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        setCartItems(cartData);
+      } catch (error) {
+        console.error('Error fetching cart data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCartData();
+  }, [userId]);
+
+  const calculateTotal = () => {
+    return cartItems.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2);
+  };
+
+  const handlePayment = async () => {
+    const stripe = await stripePromise;
+
+    console.log('Cart items being sent to API:', cartItems); // Debugging log
+
+    try {
+      const response = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ cartItems }),
+      });
+
+      const session = await response.json();
+
+      if (session.id) {
+        await stripe.redirectToCheckout({ sessionId: session.id });
+      } else {
+        console.error('Failed to create checkout session');
+      }
+    } catch (error) {
+      console.error('Error during payment:', error);
+    }
+  };
+
+  const handleCashOnDelivery = async () => {
+    if (!userId) {
+      console.error('User is not logged in.');
+      return;
+    }
+  
+    try {
+      // Reference to the user's document in Firestore
+      const userDocRef = doc(db, 'users', userId);
+  
+      // Update the user's document with the payment mode
+      await setDoc(
+        userDocRef,
+        { paymentMode: 'Cash on Delivery' }, // Add or update the paymentMode field
+        { merge: true } // Merge with existing data
+      );
+  
+      console.log('Cash on Delivery selected and saved to database.');
+      alert('Cash on Delivery has been selected successfully!');
+    } catch (error) {
+      console.error('Error saving Cash on Delivery to database:', error);
+      alert('Failed to select Cash on Delivery. Please try again.');
+    }
+  };
+
+  if (!userId) {
+    return <p className="text-center text-black">Please sign in to view your cart.</p>;
+  }
+
   return (
-    <div className="min-h-screen bg-gray-200 flex flex-col items-center justify-center pt-16">
-      <h1 className="text-6xl font-bold text-gray-800 mb-6 text-center">Cart</h1>
-      {cartItems.length === 0 ? (
-        <p className="text-lg text-gray-600">Your cart is empty.</p>
-      ) : (
-        <div className="w-full max-w-4xl bg-white shadow-md rounded-lg p-4">
-          {cartItems.map((item) => (
-            <div
-              key={item.id}
-              className="flex items-center justify-between border-b border-gray-300 py-4"
-            >
-              <div className="flex items-center space-x-4">
-                <img
-                  src={item.image}
-                  alt={item.displayName}
-                  className="w-16 h-16 object-cover rounded-full"
-                />
-                <div>
-                  <h2 className="text-xl font-semibold text-gray-800">{item.displayName}</h2>
-                  <p className="text-gray-600">${item.price}</p>
-                  <p className="text-gray-500">Quantity: {item.quantity}</p>
-                </div>
-              </div>
-              <button
-                className="px-4 py-2 bg-red-500 text-white font-semibold rounded-lg shadow-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-opacity-75"
-                onClick={() => handleRemoveItem(item.id)}
-              >
-                Remove
-              </button>
+    <div className="min-h-screen bg-gray-100 flex flex-col items-center py-10 px-4">
+      <h1 className="text-3xl md:text-4xl font-bold text-black mb-8 text-center">
+        Your Cart
+      </h1>
+      <div className="w-full max-w-4xl bg-white shadow-lg rounded-lg p-4 md:p-8">
+        {cartItems.length > 0 ? (
+          <div>
+            {/* Scrollable Table Container */}
+            <div className="max-h-96 overflow-y-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b">
+                    <th className="py-2 px-2 md:px-4 text-black text-sm md:text-base">
+                      Image
+                    </th>
+                    <th className="py-2 px-2 md:px-4 text-black text-sm md:text-base">
+                      Name
+                    </th>
+                    <th className="py-2 px-2 md:px-4 text-black text-sm md:text-base">
+                      Price
+                    </th>
+                    <th className="py-2 px-2 md:px-4 text-black text-sm md:text-base">
+                      Quantity
+                    </th>
+                    <th className="py-2 px-2 md:px-4 text-black text-sm md:text-base">
+                      Total
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {cartItems.map((item) => (
+                    <tr key={item.id} className="border-b">
+                      <td className="py-2 px-2 md:px-4">
+                        <img
+                          src={item.image || '/placeholder.png'}
+                          alt={item.displayName}
+                          className="w-12 h-12 md:w-16 md:h-16 object-cover rounded-md"
+                        />
+                      </td>
+                      <td className="py-2 px-2 md:px-4 text-black text-sm md:text-base">
+                        {item.displayName}
+                      </td>
+                      <td className="py-2 px-2 md:px-4 text-black text-sm md:text-base">
+                        ${item.price.toFixed(2)}
+                      </td>
+                      <td className="py-2 px-2 md:px-4 text-black text-sm md:text-base">
+                        {item.quantity}
+                      </td>
+                      <td className="py-2 px-2 md:px-4 text-black text-sm md:text-base">
+                        ${(item.price * item.quantity).toFixed(2)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          ))}
-          {/* Total Amount */}
-          <div className="flex justify-between items-center mt-6 border-t border-gray-300 pt-4">
-            <h2 className="text-2xl font-bold text-gray-800">Total:</h2>
-            <p className="text-2xl font-semibold text-gray-800">
-              ${cartItems.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2)}
-            </p>
+            <div className="flex flex-col md:flex-row justify-between items-center mt-6 space-y-4 md:space-y-0 md:space-x-4">
+              <h2 className="text-xl md:text-2xl font-bold text-black">
+                Total: <span className="text-blue-600">${calculateTotal()}</span>
+              </h2>
+              <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 w-full md:w-auto">
+                <button
+                  onClick={handlePayment}
+                  className="bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 w-full sm:w-auto"
+                >
+                  Proceed to Payment
+                </button>
+                <button
+                  onClick={handleCashOnDelivery}
+                  className="bg-gray-800 text-white py-3 px-6 rounded-lg hover:bg-gray-900 w-full sm:w-auto"
+                >
+                  Cash on Delivery
+                </button>
+              </div>
+            </div>
           </div>
-          {/* Pay on Delivery Button */}
-          <div className="flex justify-center mt-6">
-            <button
-              className="px-6 py-3 bg-green-500 text-white font-semibold rounded-lg shadow-md hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75"
-              onClick={() => alert('Order placed successfully!')}
-            >
-              Pay on Delivery
-            </button>
-          </div>
-        </div>
-      )}
+        ) : (
+          <p className="text-center text-black">Your cart is empty.</p>
+        )}
+      </div>
     </div>
   );
 };

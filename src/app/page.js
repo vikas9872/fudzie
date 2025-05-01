@@ -3,7 +3,6 @@ import HomePage from "@/components/home";
 import AboutUs from "@/components/about";
 import Menu from "@/components/menu";
 import User from "@/components/register";
-import Cart from "@/components/cart";
 export default function Home() {
   return (
     <div className="scroll-smooth">
@@ -20,13 +19,10 @@ export default function Home() {
         <AboutUs />
       </div>
       <div id="menu">
-        <Menu/>
-      </div>
-      <div id="cart">
-        <Cart/>
+        <Menu />
       </div>
       <div id="registration">
-        <User/>
+        <User />
       </div>
     </div>
   );

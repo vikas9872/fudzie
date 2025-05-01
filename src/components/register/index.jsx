@@ -12,6 +12,7 @@ const User = () => {
   const emailRef = useRef(null);
   const nameRef = useRef(null);
   const passwordRef = useRef(null);
+  const feedbackRef = useRef(null); // Reference for feedback input
 
   useEffect(() => {
     // Listen for authentication state changes
@@ -75,78 +76,104 @@ const User = () => {
     }
   };
 
+  const submitFeedback = async (event) => {
+    event.preventDefault();
+    try {
+      const feedback = feedbackRef.current.value;
+
+      // Save feedback to Firestore
+      await setDoc(doc(db, 'feedback', user.uid), {
+        feedback: feedback,
+        email: user.email,
+      });
+
+      console.log('Feedback submitted:', feedback);
+      alert('Thank you for your feedback!');
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      alert(error.message);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gray-200 flex flex-col items-center justify-center">
-      <h1
-        className="font-extrabold text-4xl md:text-8xl text-black mb-6"
-        data-aos="fade-left"
-      >
-        {user ? 'Welcome Back!' : isLogin ? 'Log In' : 'Sign Up'}
-      </h1>
+    <div className="min-h-screen bg-gray-200 flex flex-col items-center justify-center pt-16">
       {user ? (
-        <div className="flex flex-col items-center">
-          <p className="text-lg text-black mb-4">You are logged in as {user.email}</p>
-          <button
-            onClick={handleSignOut}
-            className="border-2 border-black p-2 w-full md:w-auto cursor-pointer text-black hover:bg-black hover:text-white"
-          >
-            Sign Out
-          </button>
+        <div className="w-full md:w-[50%] bg-white p-8 rounded-lg shadow-lg">
+          <h1 className="font-bold text-2xl md:text-4xl text-black mb-6">Provide Feedback</h1>
+          <form onSubmit={submitFeedback} className="flex flex-col gap-6">
+            <textarea
+              placeholder="Your feedback"
+              className="bg-[#E7E7E78A] w-full h-[100px] rounded-xl placeholder-[#454545] outline-none text-black p-4"
+              ref={feedbackRef}
+              required
+            />
+            <button
+              type="submit"
+              className="bg-black text-white w-full h-[53px] rounded-xl hover:bg-gray-800"
+            >
+              Submit Feedback
+            </button>
+          </form>
         </div>
       ) : (
-        <form
-          className="w-full md:w-[50%] flex flex-col gap-4 p-4 backdrop-blur-0 backdrop-saturate-200 bg-white rounded-lg border border-gray-300/30 shadow-lg"
-          onSubmit={isLogin ? login : register}
-        >
-          {!isLogin && (
-            <div className="flex flex-col gap-2">
-              <label className="text-lg text-black">Full Name</label>
+        <div className="w-full md:w-[50%] bg-white p-8 rounded-lg shadow-lg">
+          <h1 className="font-bold text-2xl md:text-4xl text-black mb-6">
+            {isLogin ? 'Login, Welcome Back' : 'Sign Up, Join Us'}
+          </h1>
+          <form onSubmit={isLogin ? login : register} className="flex flex-col gap-6">
+            {!isLogin && (
               <input
                 type="text"
-                className="border-2 p-2 outline-none border-black text-black"
+                placeholder="Full Name"
+                className="bg-[#E7E7E78A] w-full h-[53px] rounded-xl placeholder-[#454545] outline-none text-black p-4"
                 ref={nameRef}
                 required
               />
-            </div>
-          )}
-          <div className="flex flex-col gap-2">
-            <label className="text-lg text-black">Email</label>
+            )}
             <input
               type="email"
-              className="border-2 p-2 outline-none"
+              placeholder="E-mail"
+              className="bg-[#E7E7E78A] w-full h-[53px] rounded-xl placeholder-[#454545] outline-none text-black p-4"
               ref={emailRef}
               required
             />
-          </div>
-          <div className="flex flex-col gap-2">
-            <label className="text-lg text-black">Password</label>
             <input
               type="password"
-              className="border-2 p-2 outline-none"
+              placeholder="Password"
+              className="bg-[#E7E7E78A] w-full h-[53px] rounded-xl placeholder-[#454545] outline-none text-black p-4"
               ref={passwordRef}
               required
             />
-          </div>
-          <div className="flex items-center justify-center">
             <button
               type="submit"
-              className="border-2 border-black p-2 w-full md:w-full cursor-pointer text-black hover:bg-black hover:text-white"
+              className="bg-black text-white w-full h-[53px] rounded-xl hover:bg-gray-800"
             >
-              {isLogin ? 'Log In' : 'Sign Up'}
+              {isLogin ? 'Login' : 'Sign Up'}
             </button>
-          </div>
-          <div className="flex items-center justify-center">
-            <p className="text-black">
-              {isLogin ? "Don't have an account?" : 'Already have an account?'}
+            <div className="flex items-center justify-center gap-2">
+              <div className="w-full h-[1.5px] bg-gradient-to-l from-black to-gray-300"></div>
+              <p className="text-black text-sm md:text-lg">or</p>
+              <div className="w-full h-[1.5px] bg-gradient-to-r from-black to-gray-300"></div>
+            </div>
+            <button className="flex items-center justify-center text-black text-sm border-[#4A4A4A] border-2 p-2 rounded-full">
+              <img
+                src="/Images/googleicon.png"
+                alt="google_icon"
+                className="h-[18px] md:h-[24px] w-[18px] md:w-[24px] mr-2"
+              />
+              <p className="text-xs md:text-lg">Sign in using Google</p>
+            </button>
+            <p className="text-center text-black">
+              {isLogin ? "Don't have an account?" : 'Already have an account?'}{' '}
               <span
-                className="font-bold cursor-pointer hover:underline ml-1 text-black"
+                className="font-bold cursor-pointer hover:underline"
                 onClick={() => setIsLogin(!isLogin)}
               >
                 {isLogin ? 'Sign Up' : 'Log In'}
               </span>
             </p>
-          </div>
-        </form>
+          </form>
+        </div>
       )}
     </div>
   );
