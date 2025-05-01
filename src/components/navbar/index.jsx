@@ -77,22 +77,38 @@ const Navbar = () => {
             } md:flex space-y-2 md:space-y-0 md:space-x-6 absolute md:static top-16 left-0 w-full md:w-auto bg-white md:bg-transparent shadow-md md:shadow-none`}
         >
           <li>
-            <a href="#home" className="block text-gray-600 hover:text-gray-800 px-4 py-2">
+            <a
+              href="#home"
+              className="block text-gray-600 hover:text-gray-800 px-4 py-2"
+              onClick={() => setIsMenuOpen(false)} // Close menu on click
+            >
               Home
             </a>
           </li>
           <li>
-            <a href="#about" className="block text-gray-600 hover:text-gray-800 px-4 py-2">
+            <a
+              href="#about"
+              className="block text-gray-600 hover:text-gray-800 px-4 py-2"
+              onClick={() => setIsMenuOpen(false)} // Close menu on click
+            >
               About Us
             </a>
           </li>
           <li>
-            <a href="#menu" className="block text-gray-600 hover:text-gray-800 px-4 py-2">
+            <a
+              href="#menu"
+              className="block text-gray-600 hover:text-gray-800 px-4 py-2"
+              onClick={() => setIsMenuOpen(false)} // Close menu on click
+            >
               Menu
             </a>
           </li>
           <li>
-            <a href="/cart" className="block text-gray-600 hover:text-gray-800 px-4 py-2">
+            <a
+              href="/cart"
+              className="block text-gray-600 hover:text-gray-800 px-4 py-2"
+              onClick={() => setIsMenuOpen(false)} // Close menu on click
+            >
               Cart
             </a>
           </li>
