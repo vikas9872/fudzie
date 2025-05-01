@@ -113,18 +113,18 @@ const Menu = () => {
       <div className="relative mb-8 flex justify-end w-full" ref={dropdownRef}>
         <button
           onClick={() => setDropdownOpen(!dropdownOpen)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 focus:outline-none"
+          className="px-4 py-2 w-48 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 focus:outline-none"
         >
           {selectedCategory} <span className="ml-2">&#x25BC;</span>
         </button>
         {dropdownOpen && (
-          <div className="absolute mt-2 bg-white shadow-lg rounded-lg w-48 z-10">
+          <div className="absolute mt-12 bg-white shadow-lg rounded-lg w-48 z-10">
             {categories.map((category) => (
               <button
                 key={category}
                 onClick={() => {
-                  setSelectedCategory(category);
-                  setDropdownOpen(false);
+                  setSelectedCategory(category); 
+                  setDropdownOpen(false); 
                 }}
                 className={`block w-full text-left text-black px-4 py-2 hover:bg-gray-200 ${
                   selectedCategory === category ? 'bg-gray-100 font-bold' : ''
