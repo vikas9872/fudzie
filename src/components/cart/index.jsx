@@ -1,8 +1,7 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { collection, getDocs } from 'firebase/firestore';
-import { doc, setDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, setDoc } from 'firebase/firestore';
 import db from '@/firebase';
 import { loadStripe } from '@stripe/stripe-js';
 
@@ -60,8 +59,6 @@ const Cart = () => {
   const handlePayment = async () => {
     const stripe = await stripePromise;
 
-    console.log('Cart items being sent to API:', cartItems); // Debugging log
-
     try {
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
@@ -88,18 +85,16 @@ const Cart = () => {
       console.error('User is not logged in.');
       return;
     }
-  
+
     try {
-      // Reference to the user's document in Firestore
       const userDocRef = doc(db, 'users', userId);
-  
-      // Update the user's document with the payment mode
+
       await setDoc(
         userDocRef,
-        { paymentMode: 'Cash on Delivery' }, // Add or update the paymentMode field
-        { merge: true } // Merge with existing data
+        { paymentMode: 'Cash on Delivery' },
+        { merge: true }
       );
-  
+
       console.log('Cash on Delivery selected and saved to database.');
       alert('Cash on Delivery has been selected successfully!');
     } catch (error) {
@@ -113,11 +108,24 @@ const Cart = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col items-center py-10 px-4">
-      <h1 className="text-3xl md:text-4xl font-bold text-black mb-8 text-center">
-        Your Cart
-      </h1>
-      <div className="w-full max-w-4xl bg-white shadow-lg rounded-lg p-4 md:p-8">
+    <div className="relative min-h-screen flex flex-col items-center py-10 px-4">
+      {/* Background Video */}
+      <video
+        className="absolute top-0 left-0 w-full h-full object-cover"
+        src="/Images/cart.mp4" 
+        autoPlay
+        loop
+        muted
+      ></video>
+
+      {/* Overlay for better readability */}
+      <div className="absolute top-0 left-0 w-full h-full bg-black opacity-50 z-0"></div>
+
+      {/* Content */}
+      <div className="relative z-10 w-full max-w-4xl bg-white/70 shadow-lg rounded-lg p-4 md:p-8">
+        <h1 className="text-3xl md:text-4xl font-bold text-black mb-8 text-center">
+          Your Cart
+        </h1>
         {cartItems.length > 0 ? (
           <div>
             {/* Scrollable Table Container */}

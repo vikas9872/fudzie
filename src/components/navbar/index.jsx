@@ -102,15 +102,6 @@ const Navbar = () => {
               Menu
             </a>
           </li>
-          <li>
-            <a
-              href="/cart"
-              className="block text-gray-600 hover:text-gray-800 px-4 py-2"
-              onClick={() => setIsMenuOpen(false)} // Close menu on click
-            >
-              Cart
-            </a>
-          </li>
         </ul>
 
         {/* Sign up / Sign out Button */}
