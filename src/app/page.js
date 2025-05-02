@@ -5,7 +5,7 @@ import Menu from "@/components/menu";
 import User from "@/components/register";
 export default function Home() {
   return (
-    <div className="scroll-smooth">
+    <div>
       {/* Fixed Navbar */}
       <div className="fixed top-0 left-0 w-full z-50">
         <Navbar />

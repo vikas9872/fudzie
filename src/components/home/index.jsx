@@ -2,14 +2,26 @@ import React from 'react';
 
 const HomePage = () => {
   return (
-    <div
-      className="bg-cover bg-center min-h-screen flex flex-col items-center pt-40"
-      style={{ backgroundImage: "url('/Images/homeimg.jpg')" }}
-    >
-      <h1 className="text-6xl font-bold text-black text-center mt-0.5">Welcome to Fudzie!</h1>
-      <p className="text-lg text-black text-center max-w-2xl">
-        Discover delicious recipes, explore special dishes, and find inspiration for your next meal. Fudzie is your ultimate food companion!
-      </p>
+    <div className="relative min-h-screen flex flex-col items-center justify-center">
+      {/* Background Video */}
+      <video
+        className="absolute top-0 left-0 w-full h-full object-cover"
+        src="/Images/home.mp4"
+        autoPlay
+        loop
+        muted
+      ></video>
+
+      {/* Overlay Content */}
+      <div className="relative z-10 text-center">
+        <h1 className="text-6xl font-bold text-white">Welcome to Fudzie!</h1>
+        <p className="text-lg text-white max-w-2xl mx-auto mt-4">
+          Discover delicious recipes, explore special dishes, and find inspiration for your next meal. Fudzie is your ultimate food companion!
+        </p>
+      </div>
+
+      {/* Optional Overlay for Darkening the Video */}
+      <div className="absolute top-0 left-0 w-full h-full bg-black opacity-50 z-0"></div>
     </div>
   );
 };

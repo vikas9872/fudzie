@@ -18,7 +18,6 @@ const Navbar = () => {
   }, []);
 
   useEffect(() => {
-    // Close menu when clicking outside
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         setIsMenuOpen(false);

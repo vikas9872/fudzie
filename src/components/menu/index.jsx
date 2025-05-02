@@ -16,8 +16,6 @@ const Menu = () => {
   const [selectedCategory, setSelectedCategory] = useState('All'); // State for selected category
   const [dropdownOpen, setDropdownOpen] = useState(false); // State for dropdown visibility
   const dropdownRef = useRef(null); // Ref for the dropdown
-
-  // Get the currently signed-in user's ID
   useEffect(() => {
     const auth = getAuth();
     const unsubscribe = onAuthStateChanged(auth, (user) => {
